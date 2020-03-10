@@ -213,7 +213,7 @@ def genSyl(st):
 # Removes unwanted consonant sequences between syllables
 def simplify(syllables):
     # Constant strings
-    cons = 'bcdfghjklmnpqrstvwxzñþčđĝğģħĵķļņŗšŧŵżž'
+    cons = 'bcdfghjklmnpqrstvwxzñþčđĝğģħĵķļņŗšŧŵżž'; vowels = "aeiouėyáéíóúěý"
     chars = "aàbcčdđeèėfgĝģğhħiìjĵkķlļmnņñoòpqrŗsštŧuùvwŵxyzżžþáéíóúěýâêîôû"
 
     # Consonants divided into phonetic qualities
@@ -276,7 +276,6 @@ def simplify(syllables):
         # Checks for cross-syllabic consonant clusters.
         pre = syllables[i]; nxt = syllables[i+1];
         end = syllables[i][-1]; start = syllables[i+1][0]
-        vowels = "aeiouėyáéíóúěý"
 
         if start not in vowels or end not in vowels:
             # Do voicing assimilations
