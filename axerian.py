@@ -5,6 +5,14 @@ import random, bisect, re, string, math
 # Axerian - Version 4.1 #
 # Challenge: Build a lexicon using Python!
 
+# Some regex string constants
+sub = ['cial','tia','cius','cious','uiet','gious','geous','priest','giu','dge','ion','iou','sia$','.che$','.ched$','.abe$','.ace$','.ade$','.age$','.aged$','.ake$','.ale$','.aled$','.ales$','.ane$','.ame$','.ape$','.are$','.ase$','.ashed$','.asque$','.ate$','.ave$','.azed$','.awe$','.aze$','.aped$','.athe$','.athes$','.ece$','.ese$','.esque$','.esques$','.eze$','.gue$','.ibe$','.ice$','.ide$','.ife$','.ike$','.ile$','.ime$','.ine$','.ipe$','.iped$','.ire$','.ise$','.ished$','.ite$','.ive$','.ize$','.obe$','.ode$','.oke$','.ole$','.ome$','.one$','.ope$','.oque$','.ore$','.ose$','.osque$','.osques$','.ote$','.ove$','.pped$','.sse$','.ssed$','.ste$','.ube$','.uce$','.ude$','.uge$','.uke$','.ule$','.ules$','.uled$','.ume$','.une$','.upe$','.ure$','.use$','.ushed$','.ute$','.ved$','.we$','.wes$','.wed$','.yse$','.yze$','.rse$','.red$','.rce$','.rde$','.ily$','.ely$','.des$','.gged$','.kes$','.ced$','.ked$','.med$','.mes$','.ned$','.[sz]ed$','.nce$','.rles$','.nes$','.pes$','.tes$','.res$','.ves$','ere$']
+add = ['ia','riet','dien','ien','iet','iu','iest','io','ii','ily','.oala$','.iara$','.ying$','.earest','.arer','.aress','.eate$','.eation$','[aeiouym]bl$','[aeiou]{3}','^mc', 'ism','^mc', 'asm','([^aeiouy])1l$','[^l]lien','^coa[dglx].','[^gq]ua[^auieo]','dnt$']
+
+# Setup and compile regex strings
+reSub = [re.compile(s) for s in sub]
+reAdd = [re.compile(s) for s in add]
+
 # Selects an item at random
 def choose(choices):
     values, weights = zip(*choices)
@@ -49,11 +57,11 @@ def toBase(num, base, digit):
 
 # Transfers the capitalization of one string into another
 def capitalize(word, trans):
-    cap = []; upper = string.ascii_uppercase
-    isCap = [True if word[i] in upper else False for i in range(len(word))]
+    cap = []; upper = string.ascii_uppercase; lower = string.ascii_lowercase
+    isCap = [True if word[i] in upper else False if word[i] in lower else None for i in range(len(word))]
 
     # Convert all characters to uppercase if all are uppercase
-    if set(isCap) == {True}: return trans.upper()
+    if set(isCap) == {True, None}: return trans.upper()
     else: # Else convert only the characters at corresponding indices
         tra = list(trans); i = 0
         while i < len(word):
@@ -65,94 +73,19 @@ def capitalize(word, trans):
 
 # Counts number of syllables in an English word
 def sylco(word):
-    word = word.lower()
-    # exception_add are words that need extra syllables
-    # exception_del are words that need less syllables
-    exception_add = ['serious','crucial']
-    exception_del = ['fortunately','unfortunately']
-    co_one = ['cool','coach','coat','coal','count','coin','coarse','coup','coif','cook','coign','coiffe','coof','court']
-    co_two = ['coapt','coed','coinci']
-    pre_one = ['preach']
-    syls = 0 #added syllable number
-    disc = 0 #discarded syllable number
-    #1) if letters < 3: return 1
-    if len(word) <= 3:
-        syls = 1
-        return syls
-    #2) if doesn't end with "ted" or "tes" or "ses" or "ied" or "ies", discard "es" and "ed" at the end.
-    # if it has only 1 vowel or 1 set of consecutive vowels, discard. (like "speed", "fled" etc.)
-    if word[-2:] == "es" or word[-2:] == "ed":
-        doubleAndtripple_1 = len(re.findall(r'[eaoui][eaoui]',word))
-        if doubleAndtripple_1 > 1 or len(re.findall(r'[eaoui][^eaoui]',word)) > 1:
-            if word[-3:] == "ted" or word[-3:] == "tes" or word[-3:] == "ses" or word[-3:] == "ied" or word[-3:] == "ies":
-                pass
-            else:
-                disc+=1
-    #3) discard trailing "e", except where ending is "le"
-    le_except = ['whole','mobile','pole','male','female','hale','pale','tale','sale','aisle','whale','while']
-    if word[-1:] == "e":
-        if word[-2:] == "le" and word not in le_except:
-            pass
-        else:
-            disc+=1
-    #4) check if consecutive vowels exists, triplets or pairs, count them as one.
-    doubleAndtripple = len(re.findall(r'[eaoui][eaoui]',word))
-    tripple = len(re.findall(r'[eaoui][eaoui][eaoui]',word))
-    disc+=doubleAndtripple + tripple
-    #5) count remaining vowels in word.
-    numVowels = len(re.findall(r'[eaoui]',word))
-    #6) add one if starts with "mc"
-    if word[:2] == "mc":
-        syls+=1
-    #7) add one if ends with "y" but is not surrouned by vowel
-    if word[-1:] == "y" and word[-2] not in "aeoui":
-        syls +=1
-    #8) add one if "y" is surrounded by non-vowels and is not in the last word.
-    for i,j in enumerate(word):
-        if j == "y":
-            if (i != 0) and (i != len(word)-1):
-                if word[i-1] not in "aeoui" and word[i+1] not in "aeoui":
-                    syls+=1
-    #9) if starts with "tri-" or "bi-" and is followed by a vowel, add one.
-    if word[:3] == "tri" and word[3] in "aeoui":
-        syls+=1
-    if word[:2] == "bi" and word[2] in "aeoui":
-        syls+=1
-    #10) if ends with "-ian", should be counted as two syllables, except for "-tian" and "-cian"
-    if word[-3:] == "ian":
-    #and (word[-4:] != "cian" or word[-4:] != "tian"):
-        if word[-4:] == "cian" or word[-4:] == "tian":
-            pass
-        else:
-            syls+=1
-    #11) if starts with "co-" and is followed by a vowel, check if exists in the double syllable dictionary, if not, check if in single dictionary and act accordingly.
-    if word[:2] == "co" and word[2] in 'eaoui':
-        if word[:4] in co_two or word[:5] in co_two or word[:6] in co_two:
-            syls+=1
-        elif word[:4] in co_one or word[:5] in co_one or word[:6] in co_one:
-            pass
-        else:
-            syls+=1
-    #12) if starts with "pre-" and is followed by a vowel, check if exists in the double syllable dictionary, if not, check if in single dictionary and act accordingly.
-    if word[:3] == "pre" and word[3] in 'eaoui':
-        if word[:6] in pre_one:
-            pass
-        else:
-            syls+=1
-    #13) check for "-n't" and cross match with dictionary to add syllable.
-    negative = ["doesn't", "isn't", "shouldn't", "couldn't","wouldn't"]
-    if word[-3:] == "n't":
-        if word in negative:
-            syls+=1
-        else:
-            pass
-    #14) Handling the exceptional words.
-    if word in exception_del:
-        disc+=1
-    if word in exception_add:
-        syls+=1
-    # calculate the output
-    return numVowels - disc + syls
+    # Count the number of vowels in the word and remove blank strings
+    vowels = re.split(r'[^aeiouy]+', word.lower())
+    vowels = [a for a in vowels if a != ""]
+
+    syllables = 0
+    for p in reSub: # Remove all subsyllables
+        if p.match(word): syllables -= 1
+    for p in reAdd: # Add certain syllables
+        if p.match(word): syllables += 1
+    syllables += len(vowels)
+    if syllables <= 0: syllables = 1
+
+    return syllables
 
 # Rank consonants, give them weights and returns a random selection
 def genCon(cons):
@@ -174,11 +107,10 @@ def genVow():
     # ė and y are neutral vowels
 
     # Random probabilities
-    isLong = False; isDiph = False
     randLong = random.randint(1, 3) # Long vowel
-    if randLong == 1: isLong = True
+    isLong = True if randLong == 1 else False
     randDiph = random.randint(1, 15) # Diphthong
-    if randLong == 1: isDiph = True
+    isDiph = True if randDiph == 1 else False
 
     # Generates a random short vowel
     vowel = random.choice(normal)
@@ -187,20 +119,16 @@ def genVow():
 
     # Adds a i or u glide
     if isDiph == True:
-        if vowel in "aeoėyáéóěý":
-            vow = "ui"; val = random.choice(vow); vowel += vow
+        if vowel in "aeoėyáéóěý": vow = "ui"; val = random.choice(vow); vowel += vow
         else:
             if vowel in "ií" and len(vowel) < 2: vow = "u"; vowel += vow
             elif vowel in "uú" and len(vowel) < 2: vow = "i"; vowel += vow
         if prob == "before": vowel = vowel[::-1]
-    if vowel == "": vowel = random.choice(normal) # Fallback
-    new = ""
-    if "ui" in vowel:
-        new = vowel.replace(random.choice(["i", "u"]), "")
-        vowel = new
-    elif "iu" in vowel:
-        new = vowel.replace(random.choice(["i", "u"]), "")
-        vowel = new
+
+    # Fallbacks
+    if vowel == "": vowel = random.choice(normal)
+    if "ui" in vowel: new = vowel.replace(random.choice(["i", "u"]), ""); vowel = new
+    elif "iu" in vowel: new = vowel.replace(random.choice(["i", "u"]), ""); vowel = new
 
     return vowel # Returns a vowel or diphthong
 
@@ -208,9 +136,10 @@ def genVow():
 def genStruct():
     syl = "v" # Start with a vowel
 
-    p1 = random.randint(1, 11); p2 = random.randint(1, 11)
-    p3 = random.randint(1, 16); p4 = random.randint(1, 16)
-    p5 = random.randint(1, 13);
+    # Random probabilities
+    p1, p2 = random.randint(1, 11), random.randint(1, 11)
+    p3, p4 = random.randint(1, 16), random.randint(1, 16)
+    p5 = random.randint(1, 13)
 
     # Append consonants
     if 1 <= p1 <= 9:
@@ -229,31 +158,25 @@ def genStruct():
 
 # Generate syllable based on preset consonant sequences.
 def genSyl(st):
-    spelling = []
-    init = "szšž"; meds = "lrjwļŗĵ"; fins = "lrjwļŗĵnmņñ"
-    cons = "tlnrskjzmdvšhgbfđņļŧŗpģwķčĝcżžqĵñħğŵxþ"
-    for j in st:
-        letters = list(j)
-        for i in range(len(letters)):
-            if letters[i] == "c": spelling.append(genCon(cons))
-            elif letters[i] == "l": spelling.append(genCon(meds))
-            elif letters[i] == "i": spelling.append(genCon(init))
-            elif letters[i] == "s": spelling.append(genCon(fins))
-            elif letters[i] == "v": spelling.append(genVow())
-    return "".join(spelling)
+    # All consonant sequences to be sorted based on frequency
+    c = "tlnrskjzmdvšhgbfđņļŧŗpģwķčĝcżžqĵñħğŵxþ"
+    i, m, f = "szšž", "lrjwļŗĵ", "lrjwļŗĵnmņñ"
+
+    # Convert all syllable structure letters and generate individual letters
+    return "".join([genVow() if st[a] == "v" else genCon(c) if st[a] == "c" else genCon(i) if st[a] == "i" else genCon(m) if st[a] == "l" else genCon(f) if st[a] == "s" else "" for a in range(len(st))])
 
 # Removes unwanted consonant sequences between syllables
 def simplify(syllables):
     # Constant strings
-    cons = 'bcdfghjklmnpqrstvwxzñþčđĝğģħĵķļņŗšŧŵżž'; vowels = "aeiouėyáéíóúěý"
+    con, vow = "bcdfghjklmnpqrstvwxzñþčđĝğģħĵķļņŗšŧŵżž", "aeiouėyáéíóúěý"
     chars = "aàbcčdđeèėfgĝģğhħiìjĵkķlļmnņñoòpqrŗsštŧuùvwŵxyzżžþáéíóúěýâêîôû"
 
     # Consonants divided into phonetic qualities
-    lab = "pbm"; lbd = "fv"; alv = "tdn"; den = "đŧ"
-    sib = "szcżšžčĝ"; pal = "ķģņ"; vel = "kgñħğ"
-    glo = "q"; app = "jĵwlrļŗ"; oth = "xþŵ"
-    nas = "mnņñ"; unv = "ptķkfŧħsšcč"; voi = "bdģgvđğzžżĝ"
-    bad = []; exc = []; pos = [i + j for i in cons for j in cons]
+    lab, lbd, alv, den = "pbm", "fv", "tdn", "đŧ"
+    sib, pal, vel = "szcżšžčĝ", "ķģņ", "kgñħğ"
+    glo, app, oth, nas = "q", "jĵwlrļŗ", "xþŵ", "mnņñ"
+    unv, voi = "ptķkfŧħsšcč", "bdģgvđğzžżĝ"
+    bad = []; exc = []; pos = [i + j for i in con for j in con]
 
     # Filter out bad consonant clusters
     for i in range(len(pos)):
@@ -294,67 +217,53 @@ def simplify(syllables):
             elif one in sib or two in sib: bad.append(pos[i])
             elif one in lbd or two in lbd: bad.append(pos[i])
 
+    # Excpetions to be removed
     for i in range(len(pos)):
         one, two = pos[i][0], pos[i][1]
         if one in "xþ":
             if two in nas or two in app: exc.append(pos[i])
         elif two in "xþ":
             if one in app: exc.append(pos[i])
-        # elif one in "h":
-            # if two in nas: exc.append(pos[i])
+        # elif one in "h": if two in nas: exc.append(pos[i])
     bad = [i for i in bad if i not in exc]
 
+    # Checks for cross-syllabic consonant clusters.
     for i in range(len(syllables)-1):
-        # Checks for cross-syllabic consonant clusters.
-        pre = syllables[i]; nxt = syllables[i+1];
-        end = syllables[i][-1]; start = syllables[i+1][0]
+        pre, nxt = syllables[i], syllables[i+1]
+        end, start = syllables[i][-1], syllables[i+1][0]
 
-        if start not in vowels or end not in vowels:
+        if start not in vow or end not in vow:
             # Do voicing assimilations
-            if start in voi and end in unv: # Ending with unvoiced consonant
-                new = nxt.replace(start, unv[voi.index(start)])
-                syllables[i+1] = new
-            elif start in unv and end in voi: # Ending with voiced consonant
-                new = nxt.replace(start, voi[unv.index(start)])
-                syllables[i+1] = new
-            elif start in unv and end in nas: # Ending with nasal consonant
-                new = nxt.replace(start, voi[unv.index(start)])
-                syllables[i+1] = new
+            if start in voi and end in unv: new = nxt.replace(start, unv[voi.index(start)]); syllables[i+1] = new
+            elif start in unv and end in voi: new = nxt.replace(start, voi[unv.index(start)]); syllables[i+1] = new
+            elif start in unv and end in nas: new = nxt.replace(start, voi[unv.index(start)]); syllables[i+1] = new
 
             # Removes bad consonant combinations
-            if (end + start) in bad:
-                new = nxt.replace(start, end)
-                syllables[i+1] = new
+            if (end + start) in bad: new = nxt.replace(start, end); syllables[i+1] = new
 
     # Removes bad consonant combinations
     for i in range(len(syllables)):
-        toReplace = syllables[i]; toReplace2 = syllables[i]
-        if toReplace[:2] in bad:
-            new = toReplace.replace(syllables[i][:2], syllables[i][0])
-            syllables[i] = new
-        if toReplace2[-2:] in bad:
-            new1 = toReplace2[i].replace(syllables[i][-2:], syllables[i][-1])
-            syllables[i] = new1
+        tr, ts = syllables[i], syllables[i]
+        if tr[:2] in bad: new = tr.replace(syllables[i][:2], syllables[i][0]); syllables[i] = new
+        if ts[-2:] in bad: nu1 = ts[i].replace(syllables[i][-2:], syllables[i][-1]); syllables[i] = nu1
 
-    if (syllables[0][0] in nas + app) and syllables[0][1] in cons:
-        new = syllables[0].replace(syllables[0][0], "")
-        syllables[0] = new
+    # Remove awkward approximant-combinations of words
+    if (syllables[0][0] in nas + app) and syllables[0][1] in con: new = syllables[0].replace(syllables[0][0], ""); syllables[0] = new
 
     return syllables
 
 # Apply gemination
 def geminate(syllables):
     # Consonants divided into phonetic qualities
-    lab = "pbm"; lbd = "fv"; alv = "tdn"; den = "đŧ"
-    sib = "szcżšžčĝ"; pal = "ķģņ"; vel = "kgñħğ"
-    glo = "qh"; app = "jĵwlrļŗ"; oth = "xþŵ"
-    nas = "mnņñ"; unv = "ptķkfŧħsšcč"; voi = "bdģgvđğzžżĝ"
+    lab, lbd, alv, den = "pbm", "fv", "tdn", "đŧ"
+    sib, pal, vel = "szcżšžčĝ", "ķģņ", "kgñħğ"
+    glo, app, oth, nas = "q", "jĵwlrļŗ", "xþŵ", "mnņñ"
+    unv, voi = "ptķkfŧħsšcč", "bdģgvđğzžżĝ"
 
     # Only sharp consonants can lengthen.
-    sharp = sib + alv + den + "lr"
+    sharp = sib + alv + den + "nlr"
 
-    # Replaces the starting consonant in a syllable with the
-    # ending consonant of the syllable before it
+    # Changes all bad consonant combinations with geminated consonants instead
     vowels = "aeiouėyáéíóúěý"
     for i in range(len(syllables)-1):
         nxt, end, start = syllables[i+1], syllables[i][-1], syllables[i+1][0]
@@ -367,25 +276,31 @@ def geminate(syllables):
     rand1 = random.randint(1, 7)
     if rand1 < 2 and syllables[-1][-1] in sharp and syllables[-1][-1] not in vowels:
         syllables[-1] += syllables[-1][-1]
+
     return syllables
 
-# diaresis vowels
+# Separates vowels between syllable boundaries
 def diaresis(syllables):
     # Replace the starting character of a syllable with an accented version
-    vowels = "aeiouėy"; sylVowels = "äëïöüĕÿ"
+    vow = "aeiouėy"; dia = "äëïöüĕÿ"
+
+    # Replace starting vowel of syllable with its diaresis equivalent
     for i in range(len(syllables)-1):
         nxt, end, start = syllables[i+1], syllables[i][-1], syllables[i+1][0]
-        if start in vowels and end in vowels:
-            syl = list(nxt); new = sylVowels[vowels.index(start)]
+        if start in vow and end in vow:
+            syl = list(nxt); new = dia[vow.index(start)]
             syl[0] = new; syllables[i+1] = "".join(syl)
+
     return syllables
 
-# Replace all vowels in a word with their dim equivalent
-def dimVow(syllables):
-    bri = "aeiouáéíóúäëïöü"; dim = "àèìòùâêîôûāēīōū"
+# Replace all vowels in a word with their dark equivalent
+def darkVow(syllables):
+    bri, dar = "aeiouáéíóúäëïöü", "àèìòùâêîôûāēīōū"
+
     for i in range(len(syllables)):
-        res = [dim[bri.index(syllables[i][j])] if syllables[i][j] in bri else syllables[i][j] for j in range(len(syllables[i]))]
+        res = [dar[bri.index(syllables[i][j])] if syllables[i][j] in bri else syllables[i][j] for j in range(len(syllables[i]))]
         syllables[i] = "".join(res)
+
     return syllables
 
 # Generate a word
@@ -393,31 +308,28 @@ def genWord(num):
     structure = ["".join(genStruct()) for i in range(num)] # Syllable structure
     syllables = [genSyl(structure[i]) for i in range(len(structure))] # Actual syllable
 
-    # Apply the three above functions
-    syllables = geminate(syllables)
-    syllables = diaresis(syllables)
-    syllables = simplify(syllables)
+    # Geminate consonants and simplify combinations, syllabify vowels
+    syllables = geminate(syllables); syllables = diaresis(syllables); syllables = simplify(syllables)
 
-    dim = False; word = ""
-    ran1 = random.randint(1, 5)
-
-    if ran1 < 3: # Replace all the vowels in a word if vowels are dim
-        dim = True
-        syllables = dimVow(syllables)
-        # Replace 3 or more instances of the same character with 2
+    # Replace all the vowels in a word if vowels are dark
+    dark = False; ran = random.randint(1, 5)
+    if ran < 3: # Word contains dark vowels
+        dark = True; syllables = darkVow(syllables)
+        # Replace 3 or more repeated characters with 2
         word = re.sub(r'(.)\1{2,}', r'\1\1', "".join(syllables))
         return word
     else:
         word = re.sub(r'(.)\1{2,}', r'\1\1', "".join(syllables))
         return word
 
-# Translate a text into gibberish
+# Translate a text into pseudo-conlang
 def translate(text):
+    con, vow = "tlnrskjzmdvšhgbfđņļŧŗpģwķčĝcżžqĵñħğŵxþ", "aeiouy"
     find = re.findall(r'([+-]?(?=\.\d|\d)(?:\d+)?(?:\.?\d*)(?:[eE][+-]?\d+)?)\1*|([\w]+)\2*|([!"#$%&\'()*+,\-./:;<=>?@[\\\]^_`{\|}~]+)\3*|(\s+)\4*', text)
     split = [next(s for s in list(find[i]) if s != "") for i in range(len(find))] # Regex-splitted string
     tag = [next(i + 1 for i, j in enumerate(list(find[i])) if j) for i in range(len(find))] # Capture group of split string
     # Generate words, convert all numbers to base 16 or leave punctuation as they are
-    sen = ["".join(dimVow(list(genVow()))[0]).title() if tag[i] == 2 and len(split[i]) == 1 and split[i] in string.ascii_uppercase else "".join(dimVow(list(genVow()))[0]) if tag[i] == 2 and len(split[i]) == 1 and split[i] in string.ascii_lowercase else capitalize(split[i], genWord(sylco(split[i]))) if tag[i] == 2 else toBase(float(split[i]), 16, "0123456789ΧΛΓΔИΣ") + ":" if tag[i] == 1 else (split[i]) for i in range(len(split))]
+    sen = [capitalize(split[i], "".join(darkVow(list(genVow()))[0])) if len(split[i]) == 1 and tag[i] == 2 and split[i] in vow else capitalize(split[i], genCon(con)) if len(split[i]) == 1 and tag[i] == 2 else capitalize(split[i], genWord(sylco(split[i]))) if tag[i] == 2 else toBase(float(split[i]), 16, "0123456789ΧΛΓΔИΣ") if tag[i] == 1 else split[i] for i in range(len(split))]
     return "".join(sen)
 
 # Transliterate a sentence into another script
@@ -434,7 +346,7 @@ def translit(sentence, mode):
     elif mode == 1:
         out = [siragil[standard.index(i)] for i in conv]
         for i in range(len(out)-1):
-            pre = conv[i]; nxt = conv[i+1]
+            pre, nxt = conv[i], conv[i+1]
             if pre == "s" and nxt in string.punctuation + " ": out[i] = ""
             elif pre == "n" and nxt in string.punctuation + " ": out[i] = ""
             elif nxt == "k" and pre in string.punctuation + " ": out[i+1] = ""
@@ -447,4 +359,4 @@ def translit(sentence, mode):
 
     return output
 
-print(translit("Hello World!\nThis is cool!", 1))
+print(translit(translate("Hello World!\nThis is the Translator in action!"), 0))
