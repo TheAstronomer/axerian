@@ -335,10 +335,10 @@ def translate(text):
 # Transliterate a sentence into another script
 def translit(sentence, mode):
     extras = " 0123456789ΧΛΓΔИΣ" + string.punctuation + "\n\t\v"
-    standard = "aáäàâābcčdđeéëèêēėěĕfgĝģğhħiíïìîījĵkķlļmnņñoóöòôōpqrŗsštŧuúüùûūvwŵxyýÿzżžþ"
+    standard = "aàbcčdđeèėfgĝģğhħiìjĵkķlļmnņñoòpqrŗsštŧuùvwŵxyzżžþáéíóúěýâêîôûäëïöüĕÿāēīōū"
     standard += standard.upper() + extras
-    siragil = ""
-    siragil += ""
+    siragil = ""
+    siragil += ""
     siragil += " " + string.punctuation + "\n\t\v"
 
     conv = list(sentence)
