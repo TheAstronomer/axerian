@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 
 import random, bisect, re, string, math
+from collections import Counter
 
 # Axerian - Version 4.1 #
 # Challenge: Build a lexicon using Python!
@@ -323,14 +324,29 @@ def genWord(num):
         return word
 
 # Translate a text into pseudo-conlang
-def translate(text):
+def translate(str):
+    a = re.findall(r'([+-]?(?=\.\d|\d)(?:\d+)?(?:\.?\d*)(?:[eE][+-]?\d+)?)\1*|([\w]+)\2*|([!"#$%&\'()*+,\-./:;<=>?@[\\\]^_`{\|}~]+)\3*|(\s+)\4*', str)
+    b = [next(s for s in list(a[i]) if s != "") for i in range(len(a))] # Splitted string
+    c = [next(i + 1 for i, j in enumerate(list(a[i])) if j) for i in range(len(a))] # Capture group
+
+    d = [b[i].lower() for i in range(len(b)) if c[i] == 2] # All words to be filtered
+    e = list(dict(Counter(d)).keys()) # All words listed once
+
+    # Translate all the words into conlang
+    f = []
     con, vow = "tlnrskjzmdvšhgbfđņļŧŗpģwķčĝcżžqĵñħğŵxþ", "aeiouy"
-    find = re.findall(r'([+-]?(?=\.\d|\d)(?:\d+)?(?:\.?\d*)(?:[eE][+-]?\d+)?)\1*|([\w]+)\2*|([!"#$%&\'()*+,\-./:;<=>?@[\\\]^_`{\|}~]+)\3*|(\s+)\4*', text)
-    split = [next(s for s in list(find[i]) if s != "") for i in range(len(find))] # Regex-splitted string
-    tag = [next(i + 1 for i, j in enumerate(list(find[i])) if j) for i in range(len(find))] # Capture group of split string
-    # Generate words, convert all numbers to base 16 or leave punctuation as they are
-    sen = [capitalize(split[i], "".join(darkVow(list(genVow()))[0])) if len(split[i]) == 1 and tag[i] == 2 and split[i] in vow else capitalize(split[i], genCon(con)) if len(split[i]) == 1 and tag[i] == 2 else capitalize(split[i], genWord(sylco(split[i]))) if tag[i] == 2 else toBase(float(split[i]), 16, "0123456789ΧΛΓΔИΣ") if tag[i] == 1 else split[i] for i in range(len(split))]
-    return "".join(sen)
+
+    for i in range(len(e)):
+        if len(e[i]) == 1:
+            if e[i] in vow: f.append("".join(darkVow(list(genVow()))[0]))
+            else: f.append(genCon(con))
+        else: f.append(genWord(sylco(e[i])))
+
+    # Final conversions
+    g = [toBase(float(b[i]), 16, "0123456789ΧΛΓΔИΣ") if c[i] == 1 else b[i] for i in range(len(c))]
+    h = [capitalize(g[i], f[e.index(g[i].lower())]) if c[i] == 2 else g[i] for i in range(len(g))]
+
+    return "".join(h)
 
 # Transliterate a sentence into another script
 def translit(sentence, mode):
