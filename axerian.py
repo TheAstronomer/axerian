@@ -347,14 +347,14 @@ def translit(sentence, mode):
         out = [siragil[standard.index(i)] for i in conv]
         for i in range(len(out)-1):
             pre, nxt = conv[i], conv[i+1]
-            if pre == "s" and nxt in string.punctuation + " ": out[i] = ""
-            elif pre == "n" and nxt in string.punctuation + " ": out[i] = ""
-            elif nxt == "k" and pre in string.punctuation + " ": out[i+1] = ""
-            elif nxt == "K" and pre in string.punctuation + " ": out[i+1] = ""
-        if conv[-1] == "s": out[-1] = ""
-        elif conv[-1] == "n": out[-1] = ""
-        elif conv[0] == "k": out[0] = ""
-        elif conv[0] == "K": out[0] = ""
+            if pre == "s" and nxt in string.punctuation + " ": out[i] = ""
+            elif pre == "n" and nxt in string.punctuation + " ": out[i] = ""
+            elif nxt == "k" and pre in string.punctuation + " ": out[i+1] = ""
+            elif nxt == "K" and pre in string.punctuation + " ": out[i+1] = ""
+        if conv[-1] == "s": out[-1] = ""
+        elif conv[-1] == "n": out[-1] = ""
+        elif conv[0] == "k": out[0] = ""
+        elif conv[0] == "K": out[0] = ""
         output = "".join(out)
 
     return output
